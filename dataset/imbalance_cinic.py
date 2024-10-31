@@ -43,11 +43,11 @@ class IMBALANCECINIC10(torchvision.datasets.ImageFolder):
         self.num_per_cls_dict = dict()
         for the_class, the_img_num in zip(classes, img_num_per_cls):
             self.num_per_cls_dict[the_class] = the_img_num
-            idx = np.where(targets_np == the_class)[0]#[0] 得到行索引
+            idx = np.where(targets_np == the_class)[0]
             np.random.shuffle(idx)
             selec_idx = idx[:the_img_num]
             new_data.append(self.data[selec_idx, ...])
-            new_targets.extend([the_class, ] * the_img_num)# 类 和 相应类样本乘以数量
+            new_targets.extend([the_class, ] * the_img_num)
         new_data = np.vstack(new_data)
         self.data = new_data
         self.targets = new_targets
@@ -79,11 +79,6 @@ def showStatic(class_labels, counts):
     plt.ylabel('Number of Samples', fontsize =11)
     plt.xticks(class_labels,('0','1','2','3','4','5','6','7','8','9'))
     plt.show()
-
-
-
-
-
 
 
 
