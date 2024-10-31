@@ -1,15 +1,7 @@
 # copy from SphereReID
 # modifed by YZ 2020/01/15
 #
-# __len__():
-#      所有的图像集合list
-# __getitem__():
-#      返回： Img, newId, (oldId, Cam)
-#   训练时：
-#     原始图像：经过缩放，裁剪，翻转，归一化，随机擦除.
-#     返回1个图像
-#   测试时：
-#     返回2个图像： [原始 翻转]
+
 
 import os
 import os.path as osp
@@ -22,17 +14,17 @@ from dataset.random_erasing import RandomErasing
 class Market1501(Dataset):
     cls_num = 751
     def __init__(self,data_pth, is_train=True, *args, **kwargs):
-        super(Market1501, self).__init__(*args, **kwargs) # args输入列表元组 kwargs字典
+        super(Market1501, self).__init__(*args, **kwargs) 
 
         ## parse image names to generate image ids
-        imgs = os.listdir(data_pth) #返回文件名称列表
-        imgs = [im for im in imgs if osp.splitext(im)[-1] == '.jpg']    #所有图像数据的集合（图像名称），某扩展名
+        imgs = os.listdir(data_pth) 
+        imgs = [im for im in imgs if osp.splitext(im)[-1] == '.jpg']   
         self.is_train = is_train
         self.im_pths = [osp.join(data_pth, im) for im in imgs]
-        self.im_infos = {}                                              #图像名称：pid, cam
-        self.person_infos = {}       # 字典 {pid1:[1,2,10 图片序号列表],pid2：[3,20 等图片序号]}
+        self.im_infos = {}                                             
+        self.person_infos = {}      
         for i, im in enumerate(imgs):
-            tokens = im.split('_') #用'_'对字符串切片
+            tokens = im.split('_') 
             im_pth = self.im_pths[i]
             pid = int(tokens[0])
             cam = int(tokens[1][1])
@@ -47,13 +39,13 @@ class Market1501(Dataset):
 
         self.pid_label_map = {}
         if self.is_train:
-          for i, (pid, ids) in enumerate(self.person_infos.items()): #items将字典每对key和value返回列表
+          for i, (pid, ids) in enumerate(self.person_infos.items()): 
              self.person_infos[pid] = np.array(ids, dtype = np.int32)
-             self.pid_label_map[pid] = i   #每个类别重新按顺序进行编号    # 标签映射：{pid1->newID}
+             self.pid_label_map[pid] = i   
         else:
-          for i, (pid, ids) in enumerate(self.person_infos.items()): # items将字典每对key和value返回列表
+          for i, (pid, ids) in enumerate(self.person_infos.items()): 
             self.person_infos[pid] = np.array(ids, dtype=np.int32)
-            self.pid_label_map[pid] = i  # 每个类别重新按顺序进行编号    # 标签映射：{pid1->newID}
+            self.pid_label_map[pid] = i  
 
         ## preprocessing
         self.trans_train = transforms.Compose([
@@ -109,7 +101,7 @@ class Market1501(Dataset):
             im = im_noflip
             #im = [im_noflip, im_flip]
 
-        #return im, self.pid_label_map[pid], self.im_infos[im_pth]  #图像内容，类别的2次编号，(原始编号ID：相机编号)
+        #return im, self.pid_label_map[pid], self.im_infos[im_pth] 
         return  im, self.pid_label_map[pid]
 
     def __len__(self):
