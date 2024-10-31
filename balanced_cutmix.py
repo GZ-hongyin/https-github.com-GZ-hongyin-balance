@@ -25,7 +25,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
     #    os.makedirs(resultFolder)
     # logfile = 'train-{}-{}__LossType={}_TrainRule={}.log'.format(time.strftime('%m%d-%H_%M'), data_type, loss_type, train_rule)
     
-    # 参数设置
+  
     # Datatype = 'cifar10'
     # Losstype = 'LDAM'
     # train_rule = 'None'
@@ -35,10 +35,10 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
     
     learning_rate = 0.1
     epochs = 300
-    # imb_ratio = 0.01  # 不平衡率100：0.01
+    # imb_ratio = 0.01  
     best_acc1 = 0
     
-    # 日志
+ 
     if not os.path.exists(resultFolder):
         os.makedirs(resultFolder)
     logfile = 'train-{}-{}__LossType={}_TrainRule={}_ImbRatio={}_Epochs={}_Alpha={}.log'.format(
@@ -47,7 +47,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
         imb_ratio, epochs, alpha)
     logger = make_logger(resultFolder, logfile)
     
-    # 构建网络
+
     logger.info("=> creating model ")
     num_classes = 100 if data_type == 'cifar100' else 10
     use_norm = True if loss_type == 'LDAM' else False
@@ -55,15 +55,15 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
     if torch.cuda.is_available():
         model = model.cuda()
     
-    # 优化器
+
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=2e-4)
     
-    # 数据集加载
+
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),  # 三个通道
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), 
     ])
     
     transform_val = transforms.Compose([
@@ -93,16 +93,16 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
     logger.info(cls_num_list)
     
     for epoch in range(epochs):
-        adjust_learning_rate(optimizer, epoch, lr=learning_rate)  # 调整学习率
+        adjust_learning_rate(optimizer, epoch, lr=learning_rate) 
         
-        # 调整训练策略
+    
         if train_rule == 'none':
             train_sampler = None
             per_cls_weights = None
         elif train_rule == 'Resample':
-            train_sampler = ImbalancedDatasetSampler(train_dataset)  # 重采样
+            train_sampler = ImbalancedDatasetSampler(train_dataset) 
             per_cls_weights = None
-        elif train_rule == 'Reweight':  # 有效样本重加权
+        elif train_rule == 'Reweight':  
             train_sampler = None
             beta = 0.999
             effective_num = 1.0 - np.power(beta, cls_num_list)
@@ -120,7 +120,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
         else:
             warnings.warn('Sample rule is not listed')
         
-        # 设置损失函数
+        
         if loss_type == 'CE':
             criterion = nn.CrossEntropyLoss(weight=per_cls_weights).cuda()
         elif loss_type == 'LDAM':
@@ -141,7 +141,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
         
         combo_loader = get_combo_loader(train_loader)
         
-        # -----------训练------------
+    
         # train(train_loader, model, criterion, optimizer, epoch)
         batch_time = AverageMeter('Time', ':6.3f')
         data_time = AverageMeter('Data', ':6.3f')
@@ -152,9 +152,9 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
         # train
         model.train()
         
-        end = time.time()  # 当前时间
+        end = time.time()  
         for i, batch in enumerate(combo_loader):
-            # 测量数据加载的时间
+          
             data_time.update(time.time() - end)
             
             lam = np.random.beta(a=alpha, b=1)
@@ -198,22 +198,21 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
             #                loss, output, target = CRMix(model=model, criterion=criterion, image=input, label=target,
             #                                             num_class_list=torch.tensor(cls_num_list))
             
-            # 测量准确率并记录损失
+           
             acc1, acc5 = accuracy(output, mixed_labels, topk=(1, 5))
             losses.update(loss.item(), inputs.size(0))
             top1.update(acc1[0], inputs.size(0))
             top5.update(acc5[0], inputs.size(0))
             
-            # 计算梯度反向传播
+        
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
-            # 测量时间
+      
             batch_time.update(time.time() - end)
             end = time.time()
             
-            if i % 10 == 0:  # 打印频率
+            if i % 10 == 0:  
                 output = ('Epoch: [{0}][{1}/{2}], lr: {lr:.5f}\t'
                           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                           'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
@@ -223,8 +222,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
                     data_time=data_time, loss=losses, top1=top1,
                     lr=optimizer.param_groups[-1]['lr'] * 0.1))  # TODO
                 logger.info(output)
-        
-        # ---------------测试--------------------
+  
         # acc1 = validate(val_loader, model, criterion, epoch)
         batch_time = AverageMeter('Time', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
@@ -243,20 +241,20 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
                     input = input.cuda(non_blocking=True)
                 target = target.cuda(non_blocking=True)
                 
-                output = model(input)  # output：各个类的预测概率
+                output = model(input)  
                 loss = criterion(output, target)
                 
-                # 准确率记录损失
+                
                 acc1, acc5 = accuracy(output, target, topk=(1, 5))
                 losses.update(loss.item(), input.size(0))
                 top1.update(acc1[0], input.size(0))
                 top5.update(acc5[0], input.size(0))
                 
-                # 测量时间
+          
                 batch_time.update(time.time() - end)
                 end = time.time()
                 
-                _, pred = torch.max(output, 1)  # pred：最大预测概率的索引（类）  _:预测概率
+                _, pred = torch.max(output, 1)  
                 all_preds.extend(pred.cpu().numpy())
                 all_targets.extend(target.cpu().numpy())
                 
@@ -269,22 +267,22 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
                         i, len(val_loader), batch_time=batch_time, loss=losses,
                         top1=top1, top5=top5))
                     logger.info(output)
-            cf = confusion_matrix(all_targets, all_preds).astype(int)  # 混淆矩阵，以矩阵形式将数据集中的记录按照真实的类别与分类模型作出的分类判断两个标准进行汇总
-            cls_cnt = cf.sum(axis=1)  # 矩阵每一行的 元素相加
+            cf = confusion_matrix(all_targets, all_preds).astype(int)  
+            cls_cnt = cf.sum(axis=1) 
             cls_hit = np.diag(cf)
             cls_acc = cls_hit / cls_cnt
             output = ('{flag} Results: Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Loss {loss.avg:.5f}'
                       .format(flag=flag, top1=top1, top5=top5, loss=losses))
             out_cls_acc = '%s Class Accuracy: %s' % (
                 flag, (np.array2string(cls_acc, separator=',',
-                                       formatter={'float_kind': lambda x: "%.3f" % x})))  # 返回一个数组的字符串形式
+                                       formatter={'float_kind': lambda x: "%.3f" % x})))  
             logger.info(output)
             logger.info(out_cls_acc)
         
-        # 记录最高的acc1
+        
         is_best = top1.avg > best_acc1
         best_acc1 = max(top1.avg, best_acc1)
-        output_best = 'Best Prec@1: %.3f\n' % (best_acc1)  # top1 准确率
+        output_best = 'Best Prec@1: %.3f\n' % (best_acc1)  
         # print(output_best)
         logger.info(output_best)
 
@@ -292,7 +290,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
 #    classes = ['airplane', 'automobile', 'bird', 'cat', 'deer','dog','frog','horse','ship','truck']
 
 
-#    plt.imshow(cf, interpolation='nearest', cmap=plt.cm.Oranges)  # 按照像素显示出矩阵
+#    plt.imshow(cf, interpolation='nearest', cmap=plt.cm.Oranges) 
 #    plt.title('Confusion Matrix')
 #    plt.colorbar()
 #    tick_marks = np.arange(len(classes))
@@ -301,10 +299,10 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
 
 #    thresh = cf.max() / 2.
 # iters = [[i,j] for i in range(len(classes)) for j in range((classes))]
-# ij配对，遍历矩阵迭代器
+
 #    iters = np.reshape([[[i, j] for j in range(10)] for i in range(10)], (cf.size, 2))
 #    for i, j in iters:
-#        plt.text(j, i, format(cf[i, j]), va='center', ha='center')  # 显示对应的数字
+#        plt.text(j, i, format(cf[i, j]), va='center', ha='center')  
 
 #    plt.ylabel('Real Label')
 #    plt.xlabel('Prediction')
@@ -313,7 +311,7 @@ def main(data_type='cifar10', loss_type='CE', train_rule='none', resultFolder='R
 #    plt.show()
 
 
-def adjust_learning_rate(optimizer, epoch, lr=0.1):  # 学习率衰减
+def adjust_learning_rate(optimizer, epoch, lr=0.1): 
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     epoch = epoch + 1
     if epoch <= 5:
