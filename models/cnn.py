@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 # (1)LeNet
 class LeNet_mnist(nn.Module):
-    def __init__(self, n_in=1, n_out=10, size=28):         # 输入通道数，输出节点数
+    def __init__(self, n_in=1, n_out=10, size=28):         # channel number 
         super(LeNet_mnist, self).__init__()
         if size == 28:
             firstkernel_size = 3
@@ -38,7 +38,7 @@ class LeNet_mnist(nn.Module):
         return num_features
 
 # (2)AlexNet
-# ALexNet_cifar10：在pytorch自带的结构上，将kernel_size等参数修改适合cafir10
+# ALexNet_cifar10：
 class AlexNet(nn.Module):
     def __init__(self, n_out=10):
         super(AlexNet, self).__init__()
@@ -63,7 +63,7 @@ class AlexNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),      #注意此处
+            nn.ReLU(inplace=True),    
             nn.Linear(4096, n_out),
         )
 
