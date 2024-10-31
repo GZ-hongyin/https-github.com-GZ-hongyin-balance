@@ -22,8 +22,8 @@ class MnistSubset():
             label_source = self.mnist.train_labels
 
             for c in classes:
-                tmp_idx = np.where(label_source == c)[0]  #找出相应类的索引
-                tmp_idx = torch.from_numpy(tmp_idx) # 转化为tensor
+                tmp_idx = np.where(label_source == c)[0]
+                tmp_idx = torch.from_numpy(tmp_idx) 
                 seln = selnum[c]
                 img = data_source[tmp_idx[:seln]]
                 label = label_source[tmp_idx[:seln]]
