@@ -35,14 +35,14 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
     valid_x = torch.load(data_dir + '/valid_x.pt')
     valid_label = torch.load(data_dir + '/valid_label.pt')
 
-    # 日志
+
     if not os.path.exists(resultFolder):
         os.makedirs(resultFolder)
     logfile = 'train-{}-{}-{}-{}-{}-imb_factor={}-{}-{}.log'.format(time.strftime('%m%d%H'), data_type, loss_type, imb_type, train_rule, imb_ratio,mix_rule, model_type)
     logger = make_logger(resultFolder, logfile)
 
 
-    # 构建网络
+ 
     logger.info("=> creating model ")
     num_classes = 200 if data_type == 'Tiny-ImageNet' else 10
     use_norm = True if loss_type == 'LDAM' else False
@@ -51,17 +51,17 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
     if torch.cuda.is_available():
         model = model.cuda()
 
-    # 优化器
+
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=2e-4)
 
-    # 数据集加载
+
     transform_train = transforms.Compose([
         transforms.ToPILImage(),
         # transforms.RandomCrop(32, padding=4),
         transforms.RandomCrop(64),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.4802, 0.4481, 0.3975), (0.2302, 0.2265, 0.2262)),  # 三个通道
+        transforms.Normalize((0.4802, 0.4481, 0.3975), (0.2302, 0.2265, 0.2262)), 
     ])
 
     transform_val = transforms.Compose([
@@ -84,15 +84,15 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
     logger.info(cls_num_list)
 
     for epoch in range(epochs):
-        adjust_learning_rate(optimizer, epoch, lr=learning_rate)  # 调整学习率
-        # 调整训练策略
+        adjust_learning_rate(optimizer, epoch, lr=learning_rate)  
+      
         if   train_rule == 'none':
             train_sampler = None
             per_cls_weights = None
         elif train_rule == 'Resample':
-            train_sampler = ImbalancedSVHNSampler(train_dataset)  # 重采样
+            train_sampler = ImbalancedSVHNSampler(train_dataset)  
             per_cls_weights = None
-        elif train_rule == 'Reweight':  # 有效样本重加权
+        elif train_rule == 'Reweight':
             train_sampler = None
             beta = 0.999
             effective_num = 1.0 - np.power(beta, cls_num_list)
@@ -119,7 +119,7 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
         else:
             warnings.warn('Sample rule is not listed')
 
-        # 设置损失函数
+        
         if loss_type == 'CE':
             criterion = nn.CrossEntropyLoss(weight=per_cls_weights).cuda()
         elif loss_type == 'LDAM':
@@ -139,7 +139,7 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
             num_workers=8, pin_memory=True)
 
 
-        # -----------训练------------
+      
         batch_time = AverageMeter('Time', ':6.3f')
         data_time = AverageMeter('Data', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
@@ -148,12 +148,12 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
 
         # train
         model.train()
-        end = time.time()  # 当前时间
+        end = time.time()  
         data_time.update(time.time() - end)
 
         
         for i, (input, target) in enumerate(train_loader):
-            # 测量数据加载的时间
+           
             data_time.update(time.time() - end)
 
             if torch.cuda.is_available():
@@ -177,13 +177,13 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
                 loss, output, target = CRMix(model=model, criterion=criterion, image=input, label=target,
                                                    num_class_list=torch.tensor(cls_num_list))
 
-            # 测量准确率并记录损失
+           
             acc1, acc5 = accuracy(output, target, topk=(1,5))
             losses.update(loss.item(), input.size(0))
             top1.update(acc1[0], input.size(0))
             top5.update(acc5[0], input.size(0))
 
-            # 计算梯度反向传播
+            
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -195,7 +195,7 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
                   'Prec@5 {top5.val:.3f} ({top5.avg:.3f})\t'.format( epoch,loss=losses, top1=top1, top5=top5,lr=optimizer.param_groups[-1]['lr'] * 0.1))  # TODO
         logger.info(output)
 
-        # ---------------测试--------------------
+      
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
@@ -211,16 +211,16 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
                     input = input.cuda(non_blocking=True)
                 target = target.cuda(non_blocking=True)
 
-                output = model(input)  # output：各个类的预测概率
+                output = model(input)
                 loss = criterion(output, target)
 
-                # 准确率记录损失
+              
                 acc1, acc5 = accuracy(output, target, topk=(1, 5))
                 losses.update(loss.item(), input.size(0))
                 top1.update(acc1[0], input.size(0))
                 top5.update(acc5[0], input.size(0))
 
-                _, pred = torch.max(output, 1)  # pred：最大预测概率的索引（类）  _:预测概率
+                _, pred = torch.max(output, 1) 
                 all_preds.extend(pred.cpu().numpy())
                 all_targets.extend(target.cpu().numpy())
 
@@ -238,10 +238,10 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
                               'Time/epoch {batch_time.avg:.2f}s'.format(top1=top1, top5=top5, batch_time=batch_time))
             logger.info(output_results)
 
-        # 记录最高的acc1
+        
         is_best = top1.avg > best_acc1
         best_acc1 = max(top1.avg, best_acc1)
-        output_best = 'Best Prec@1: %.3f\n' % (best_acc1)  # top1 准确率
+        output_best = 'Best Prec@1: %.3f\n' % (best_acc1)  
         #print(output_best)
         logger.info(output_best)
         
@@ -252,7 +252,7 @@ def main(data_type='Tiny-ImageNet', loss_type='CE', train_rule='DRS', resultFold
     os.rename(old_path, new_path)
 
 
-def adjust_learning_rate(optimizer, epoch, lr=0.1):  # 学习率衰减
+def adjust_learning_rate(optimizer, epoch, lr=0.1): 
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     epoch = epoch + 1
     if epoch <= 5:
