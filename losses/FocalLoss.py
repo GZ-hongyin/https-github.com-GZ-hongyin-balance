@@ -24,7 +24,7 @@ class FocalLoss(nn.Module):
 if __name__ == '__main__':
     from utils import fix_random
     fix_random(seed=0)
-    input = torch.rand(5,10) #（batch数，类别数）
+    input = torch.rand(5,10) #（batch数，classify）
     target = torch.randint(10,size=(5,))
 
     criterion = FocalLoss(gamma=2,weight=None)
