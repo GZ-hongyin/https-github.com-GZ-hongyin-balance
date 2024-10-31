@@ -1,9 +1,9 @@
 ## Executing Code
-  Code run.sh
+  run.sh
 ## The train
   svhn-train.py
 ## The test datasets
-  test.py
+  run2.py
 
 ## Dataset
 
