@@ -1,4 +1,4 @@
-# cifar10和cifar100的长尾数据集
+
 # LDAM (https://github.com/kaidic/LDAM-DRW) to produce long-tailed CIFAR datasets.
 
 from hashlib import new
@@ -47,11 +47,11 @@ class IMBALANCECIFAR10(torchvision.datasets.CIFAR10):
         self.num_per_cls_dict = dict()
         for the_class, the_img_num in zip(classes, img_num_per_cls):
             self.num_per_cls_dict[the_class] = the_img_num
-            idx = np.where(targets_np == the_class)[0]#[0] 得到行索引
+            idx = np.where(targets_np == the_class)[0]#[0] 
             np.random.shuffle(idx)
             selec_idx = idx[:the_img_num]
             new_data.append(self.data[selec_idx, ...])
-            new_targets.extend([the_class, ] * the_img_num)# 类 和 相应类样本乘以数量
+            new_targets.extend([the_class, ] * the_img_num)
         new_data = np.vstack(new_data)
         self.data = new_data
         self.targets = new_targets
