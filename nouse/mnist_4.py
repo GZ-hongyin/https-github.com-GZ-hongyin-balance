@@ -21,7 +21,7 @@ transform = transforms.Compose(
 #trainset = torchvision.datasets.MNIST(root='./data',train=True,download=True,transform=transform)
 #trainloader = torch.utils.data.DataLoader(trainset,batch_size=32,shuffle=True,num_workers = 0)
 
-selnumber = np.linspace(6000,60,10,dtype=int)  #不平衡样本
+selnumber = np.linspace(6000,60,10,dtype=int)  
 trainset = MnistSubset(selnum=selnumber,mode='train')
 trainloader = torch.utils.data.DataLoader(trainset,batch_size=4,shuffle=True,num_workers = 0)
 
@@ -36,8 +36,8 @@ class CNN4(nn.Module):
         super(CNN4,self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(1,16,kernel_size=3),#(28-3+2*0)/1+1,26*26*16
-            nn.BatchNorm2d(16),#归一化
-            nn.ReLU(inplace=True)#激活函数
+            nn.BatchNorm2d(16),
+            nn.ReLU(inplace=True)
         )
         self.layer2 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=3),#(26-3+2*0)/1+1=24,24*24*32
@@ -80,17 +80,17 @@ if torch.cuda.is_available():
     model = model.cuda()
 
 
-# 定义损失函数和优化器
+
 criterion = nn.CrossEntropyLoss()
 #criterion = FocalLoss(gamma=2,weight=None)
 #criterion = LDAMLoss(cls_num_list = cls_num_list,max_m=0.5,s=30,weight=None)
 optimizer = optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
 
-#训练
-for epoch in range(2): # 对数据集训练2次
+
+for epoch in range(2): 
     running_loss = 0.0
     for i ,data in enumerate(tqdm(trainloader),0):
-        # 得到输入；数据是[输入，标签]的列表
+       
         inputs,labels = data
         if torch.cuda.is_available():
             inputs = inputs.cuda()
@@ -105,20 +105,20 @@ for epoch in range(2): # 对数据集训练2次
         loss.backward()
         optimizer.step()
 
-        # 打印数据
+        
         running_loss += loss.item()
-        if i % 2000 ==1999:# 每2000次批次打印一次
+        if i % 2000 ==1999:
             print('[%d,%5d] loss:%.3f'%(epoch+1,i+1,running_loss/2000))
             running_loss=0.0
-print('训练结束 ')
+print('train result ')
 
-#  GPU
+
 #device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 #print(device)
 #CNN4.to(device)
 #inputs,labels = data[0].to(device),data[1].to(device)
 
-#测试
+
 model.eval()
 eval_loss = 0
 eval_acc = 0
